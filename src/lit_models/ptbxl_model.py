@@ -3,23 +3,25 @@ import torch
 
 
 from src.utils.metrics import insert_metrics
-
+from torch.optim.lr_scheduler import OneCycleLR
 
 class ECGClassifier(pl.LightningModule):
-    def __init__(self, model, num_classes, loss_fn, learning_rate, **kwargs):
+    def __init__(self, model, num_classes, loss_fn, learning_rate, wd, total_optimizer_steps,
+                 **kwargs):
         super(ECGClassifier, self).__init__()
 
         self.kwargs = kwargs
-
         self.model = model
 
         # Loss function
         self.loss_fn = loss_fn
-
+        
         # Learning rate
         self.learning_rate = learning_rate
         self.num_classes = num_classes
+        self.total_optimizer_steps = total_optimizer_steps
 
+        self.wd = wd
         self.train_metrics, self.val_metrics, self.test_metrics = self._configure_metrics()
 
     def forward(self, x):
@@ -46,20 +48,17 @@ class ECGClassifier(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         x, y = batch
         y_pred = self.model(x)
+        return y_pred
 
     def configure_optimizers(self):
-        from torch.optim import Adam
-        from torch.optim.lr_scheduler import ReduceLROnPlateau
-
-        optimizer = Adam(self.parameters(), lr=self.learning_rate)
-        self.scheduler = {
-            "scheduler": ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=3, verbose=True),
-            "monitor": "val_loss",  # The metric to monitor for learning rate reduction
-            "interval": "epoch",  # Reduce LR every epoch
-            "frequency": 1,  # How frequent within one epoch
-            "strict": True,
-        }
-        return {"optimizer": optimizer, "lr_scheduler": self.scheduler, "monitor": "val_loss"}
+        optimizer = torch.optim.AdamW(self.parameters(), lr=0.01, weight_decay=0.01)
+        lr_scheduler = OneCycleLR(
+            optimizer,
+            max_lr=0.01,
+            total_steps=self.total_optimizer_steps,
+            three_phase=True
+        )
+        return [optimizer], [{'scheduler': lr_scheduler, 'interval': 'step'}]
 
     def _configure_metrics(self):
 
