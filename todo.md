@@ -14,9 +14,21 @@
 
 ### Some smart ways to make training better
 
+### Exchaustive metric loggin and comparing
 
+### Model saving and maintanance of model registry
+
+### Exchastive model config saving
+
+### Full lineage graph in wandb, based on artifacts (for models, data)
+
+### Create ensemble model
 
 ## Current TO-DO (low level goals)
+
+### Add early stopping
+
+### Add save-best-model callback mechanism 
 
 
 

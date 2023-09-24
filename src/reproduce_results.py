@@ -15,6 +15,9 @@ from .data.ptb_xl_multiclass_datamodule import PTB_XL_Datamodule
 import os
 from datetime import datetime
 
+from argparse import ArgumentParser
+
+
 def create_directory_with_timestamp(path, prefix):
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     dir_name = f"{prefix}_{timestamp}"
@@ -28,7 +31,14 @@ BATCH_SIZE = 128
 EPOCHS = 50
 ACCUMULATE_GRADIENT_STEPS = 1
 
-data_module = PTB_XL_Datamodule(Path("./data"), filter_for_singlelabel=False, batch_size=BATCH_SIZE)
+run = wandb.init(project='ecg_benchmarking_lit', name='test_run')
+
+artifact = run.use_artifact(f"{'ptbxl_split'}:latest")
+
+
+datadir = artifact.download()
+
+data_module = PTB_XL_Datamodule(Path(datadir), filter_for_singlelabel=False, batch_size=BATCH_SIZE)
 
 data_module.prepare_data()
 data_module.setup()
@@ -41,7 +51,6 @@ print(len(data_module.train_dataset))
 # exit()
 
 # Initialize W&B
-wandb.init(project='fastai_vs_lightning', name='lightning_run_ours')
 
 model = resnet1d_wang(
                 num_classes=5,
@@ -51,8 +60,9 @@ model = resnet1d_wang(
                 lin_ftrs_head=[128],
             )
 
+
 model_lit = ECGClassifier(model, 5, torch.nn.BCEWithLogitsLoss(), 0.01, wd=0.01, total_optimizer_steps=total_optimizer_steps)
-wandb_logger = WandbLogger()
+wandb_logger = WandbLogger(log_model='all')
 wandb_logger.watch(model_lit, log='all')
 
 dir_model = create_directory_with_timestamp("./models", "resnet1d_wang")

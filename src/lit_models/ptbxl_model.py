@@ -55,7 +55,7 @@ class ECGClassifier(pl.LightningModule):
         lr_scheduler = OneCycleLR(
             optimizer,
             max_lr=0.01,
-            total_steps=self.total_optimizer_steps,
+            total_steps=self.trainer.estimated_stepping_batches,
             three_phase=True
         )
         return [optimizer], [{'scheduler': lr_scheduler, 'interval': 'step'}]
