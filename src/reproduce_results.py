@@ -10,7 +10,7 @@ from src.lit_models.ptbxl_model import ECGClassifier
 from src.models.resnet1d import resnet1d_wang
 from pytorch_lightning.loggers import WandbLogger
 
-from .data.ptb_xl_multiclass_datamodule import PTB_XL_Datamodule
+from data.ptb_xl_multiclass_datamodule import PTB_XL_Datamodule
 
 import os
 from datetime import datetime
@@ -31,7 +31,7 @@ BATCH_SIZE = 128
 EPOCHS = 50
 ACCUMULATE_GRADIENT_STEPS = 1
 
-run = wandb.init(project='ecg_benchmarking_lit', name='test_run')
+run = wandb.init(project='ecg_benchmarking_lit', name='test_run', entity="phd-dk")
 
 artifact = run.use_artifact(f"{'ptbxl_split'}:latest")
 
@@ -68,10 +68,10 @@ wandb_logger.watch(model_lit, log='all')
 dir_model = create_directory_with_timestamp("./models", "resnet1d_wang")
 
 checkpoint_callback = ModelCheckpoint(dirpath=dir_model, save_top_k=2, monitor="val_loss")
-early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=3, verbose=False, mode="min")
+early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=30, verbose=False, mode="min")
 learning_rate_monitor = LearningRateMonitor(logging_interval='step')
 
 # Create the Learner
-trainer = pl.Trainer(max_epochs=50, logger=wandb_logger, callbacks=[checkpoint_callback, early_stop_callback, learning_rate_monitor])
+trainer = pl.Trainer(accumulate_grad_batches=8,log_every_n_steps=1, max_epochs=50, logger=wandb_logger, callbacks=[checkpoint_callback, early_stop_callback, learning_rate_monitor])
 
 trainer.fit(model_lit, datamodule=data_module)

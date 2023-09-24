@@ -31,7 +31,7 @@ class ECGClassifier(pl.LightningModule):
         x, y = batch
         y_pred = self.model(x)
         loss = self.loss_fn(y_pred, y)
-        self.log("train_loss", loss, on_epoch=True, prog_bar=True, logger=True)  # Log to progress bar and logger
+        self.log("train_loss", loss, on_epoch=True, prog_bar=True, logger=True, on_step=True)  # Log to progress bar and logger
         self._calculate_metrics(self.train_metrics, y_pred, y)
         return loss
 
@@ -39,7 +39,7 @@ class ECGClassifier(pl.LightningModule):
         x, y = batch
         y_pred = self.model(x)
         loss = self.loss_fn(y_pred, y)
-        self.log("val_loss", loss, on_epoch=True, prog_bar=True, logger=True)  # Log to progress bar and logger
+        self.log("val_loss", loss, on_epoch=True, prog_bar=True, logger=True, on_step=True)  # Log to progress bar and logger
         self._calculate_metrics(self.val_metrics, y_pred, y)
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):

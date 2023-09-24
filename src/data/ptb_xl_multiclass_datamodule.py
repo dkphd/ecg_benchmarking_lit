@@ -5,7 +5,7 @@ import numpy as np
 
 import pytorch_lightning as pl
 
-from ..utils.preprocessing import StandardScalerTorch
+from src.utils.preprocessing import StandardScalerTorch
 from .timeseries_dataset_crops import TimeseriesDatasetCrops
     
 
@@ -47,12 +47,12 @@ class PTB_XL_Datamodule(pl.LightningDataModule):
 
     def _load_data(self):
 
-        self.X_train = torch.Tensor(np.load(self.data_path / "X_train.npy")).transpose(1, 2)
-        self.y_train = torch.Tensor(pd.read_csv(self.data_path / "y_train.csv").iloc[:, 2:].values)
-        self.X_val = torch.Tensor(np.load(self.data_path / "X_val.npy")).transpose(1, 2)
-        self.y_val = torch.Tensor(pd.read_csv(self.data_path / "y_val.csv").iloc[:, 2:].values)
-        self.X_test = torch.Tensor(np.load(self.data_path / "X_test.npy")).transpose(1, 2)
-        self.y_test = torch.Tensor(pd.read_csv(self.data_path / "y_test.csv").iloc[:, 2:].values)
+        self.X_train = torch.Tensor(np.load(self.data_path / "train_data.npy")).transpose(1, 2)
+        self.y_train = torch.Tensor(pd.read_csv(self.data_path / "train_labels.csv").iloc[:, 2:].values)
+        self.X_val = torch.Tensor(np.load(self.data_path / "val_data.npy")).transpose(1, 2)
+        self.y_val = torch.Tensor(pd.read_csv(self.data_path / "val_labels.csv").iloc[:, 2:].values)
+        self.X_test = torch.Tensor(np.load(self.data_path / "test_data.npy")).transpose(1, 2)
+        self.y_test = torch.Tensor(pd.read_csv(self.data_path / "test_labels.csv").iloc[:, 2:].values)
         
         
     def _filter_no_labels(self):
