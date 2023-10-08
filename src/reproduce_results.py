@@ -4,7 +4,7 @@ import torch
 import pytorch_lightning as pl
 import wandb
 
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, LearningRateMonitor
+from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 
 from src.lit_models.ptbxl_model import ECGClassifier
 from src.models.resnet1d import resnet1d_wang
@@ -14,8 +14,6 @@ from data.ptb_xl_multiclass_datamodule import PTB_XL_Datamodule
 
 import os
 from datetime import datetime
-
-from argparse import ArgumentParser
 
 
 def create_directory_with_timestamp(path, prefix):
@@ -30,25 +28,23 @@ def create_directory_with_timestamp(path, prefix):
 BATCH_SIZE = 128
 EPOCHS = 50
 ACCUMULATE_GRADIENT_STEPS = 1
+FILTER_FOR_SINGLELABEL = False
+
+loss = torch.nn.BCEWithLogitsLoss() if FILTER_FOR_SINGLELABEL else torch.nn.CrossEntropyLoss()
+
 
 run = wandb.init(project="ecg_benchmarking_lit", name="test_run", entity="phd-dk")
-
 artifact = run.use_artifact(f"{'ptbxl_split'}:latest")
-
 
 datadir = artifact.download()
 
-data_module = PTB_XL_Datamodule(Path(datadir), filter_for_singlelabel=False, batch_size=BATCH_SIZE)
+data_module = PTB_XL_Datamodule(Path(datadir), filter_for_singlelabel=FILTER_FOR_SINGLELABEL, batch_size=BATCH_SIZE)
 
 data_module.prepare_data()
 data_module.setup()
 
 
 total_optimizer_steps = int(len(data_module.train_dataset) * EPOCHS / ACCUMULATE_GRADIENT_STEPS)
-print(total_optimizer_steps)
-print(len(data_module.train_dataset))
-
-# exit()
 
 # Initialize W&B
 
@@ -60,7 +56,6 @@ model = resnet1d_wang(
     lin_ftrs_head=[128],
 )
 
-
 model_lit = ECGClassifier(
     model, 5, torch.nn.BCEWithLogitsLoss(), 0.01, wd=0.01, total_optimizer_steps=total_optimizer_steps
 )
@@ -69,7 +64,6 @@ wandb_logger.watch(model_lit, log="all")
 
 dir_model = create_directory_with_timestamp("./models", "resnet1d_wang")
 
-checkpoint_callback = ModelCheckpoint(dirpath=dir_model, save_top_k=2, monitor="val_loss")
 early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=30, verbose=False, mode="min")
 learning_rate_monitor = LearningRateMonitor(logging_interval="step", log_momentum=True)
 
@@ -79,7 +73,7 @@ trainer = pl.Trainer(
     log_every_n_steps=1,
     max_epochs=50,
     logger=wandb_logger,
-    callbacks=[checkpoint_callback, early_stop_callback, learning_rate_monitor],
+    callbacks=[early_stop_callback, learning_rate_monitor],
 )
 
 trainer.fit(model_lit, datamodule=data_module)
