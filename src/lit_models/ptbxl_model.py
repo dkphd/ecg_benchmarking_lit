@@ -47,13 +47,14 @@ class ECGClassifier(pl.LightningModule):
         self._calculate_metrics(self.val_metrics, y_pred, y)
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        return self(batch)
+        x, y = batch
+        return self(x), y
 
     def test_step(self, batch, batch_idx):
         x, y = batch
         y_pred = self.model(x)
-        return y_pred
-
+        return y_pred, y
+    
     def configure_optimizers(self):
         opt = torch.optim.AdamW(self.parameters(), lr=self.learning_rate, weight_decay=self.wd)
         scheduler = OneCycleLR(opt, max_lr=self.learning_rate, total_steps=self.trainer.estimated_stepping_batches)

@@ -10,7 +10,7 @@ from src.lit_models.ptbxl_model import ECGClassifier
 from src.models.resnet1d import resnet1d_wang
 from pytorch_lightning.loggers import WandbLogger
 
-from data.ptb_xl_multiclass_datamodule import PTB_XL_Datamodule
+from src.data.ptb_xl_multiclass_datamodule import PTB_XL_Datamodule
 
 import os
 from datetime import datetime
@@ -43,6 +43,7 @@ data_module = PTB_XL_Datamodule(Path(datadir), filter_for_singlelabel=FILTER_FOR
 data_module.prepare_data()
 data_module.setup()
 
+print(len(data_module.val_dataset))
 
 total_optimizer_steps = int(len(data_module.train_dataset) * EPOCHS / ACCUMULATE_GRADIENT_STEPS)
 
@@ -77,3 +78,22 @@ trainer = pl.Trainer(
 )
 
 trainer.fit(model_lit, datamodule=data_module)
+
+res = trainer.predict(dataloaders=data_module.test_dataloader())
+
+y_hat, y = torch.concatenate([x[0] for x in res]), torch.concatenate([x[1] for x in res])
+
+
+print(y_hat.shape)
+print(y.shape)
+
+print(len(data_module.test_dataloader()) * 128)
+# for idx, batch in enumerate(data_module.test_dataloader()):
+#     y_hat, y = trainer.predict(batch)
+#     print(batch)
+
+
+torch.save({
+    "y_pred": y_hat,
+    "y": y
+},"prediction_data_pytorch_lightning_50.pt")
