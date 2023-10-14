@@ -27,7 +27,10 @@ def insert_metrics(ecg_classifier, num_classes, prefix="train", task="multiclass
         Specificity,
     ):
         metric_name = f"{prefix}_{metric.__name__.lower()}"
-        setattr(ecg_classifier, metric_name, metric(num_classes=num_classes, task=task))
+        if task == 'multiclass':
+            setattr(ecg_classifier, metric_name, metric(num_classes=num_classes, task='multiclass'))
+        elif task == 'multilabel':
+            setattr(ecg_classifier, metric_name, metric(num_labels=num_classes, task='multilabel'))
         metrics_dict[metric_name] = getattr(ecg_classifier, metric_name)
 
     # accuracy_no_reduction = Accuracy(num_classes=num_classes, task=task, average=None)

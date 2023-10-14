@@ -55,22 +55,22 @@ model = resnet1d_wang(
                 lin_ftrs_head=[128],
             )
 
-base_path = "/home/arek/Desktop/ecg_benchmarking_lit/artifacts/ptbxl_split:v0/"
-X_train, X_val, y_train, y_val = np.load(base_path + "train_data.npy"), np.load(base_path + "val_data.npy"), pd.read_csv(base_path + "train_labels.csv"), pd.read_csv(base_path + "val_labels.csv")
+# base_path = "/home/arek/Desktop/ecg_benchmarking_lit/artifacts/ptbxl_split:v0/"
+# X_train, X_val, y_train, y_val = np.load(base_path + "train_data.npy"), np.load(base_path + "val_data.npy"), pd.read_csv(base_path + "train_labels.csv"), pd.read_csv(base_path + "val_labels.csv")
 
-print(y_train)
+# print(y_train)
 
-# exit()
-X_train, X_val = np.transpose(X_train, (0,2,1)), np.transpose(X_val, (0,2,1))
-X_train, X_val, y_train, y_val = torch.tensor(X_train).float(), torch.tensor(X_val).float(), torch.tensor(y_train.iloc[:, 2:].values).float(), torch.tensor(y_val.iloc[:, 2:].values).float()
+# # exit()
+# X_train, X_val = np.transpose(X_train, (0,2,1)), np.transpose(X_val, (0,2,1))
+# X_train, X_val, y_train, y_val = torch.tensor(X_train).float(), torch.tensor(X_val).float(), torch.tensor(y_train.iloc[:, 2:].values).float(), torch.tensor(y_val.iloc[:, 2:].values).float()
 
-y_train_mask = y_train.sum(axis=1) > 0
-y_val_mask = y_val.sum(axis=1) > 0
+# y_train_mask = y_train.sum(axis=1) > 0
+# y_val_mask = y_val.sum(axis=1) > 0
 
-X_train, y_train = X_train[y_train_mask], y_train[y_train_mask]
-X_val, y_val = X_val[y_val_mask], y_val[y_val_mask]
+# X_train, y_train = X_train[y_train_mask], y_train[y_train_mask]
+# X_val, y_val = X_val[y_val_mask], y_val[y_val_mask]
 
-print(X_train.shape)
+# print(X_train.shape)
 from pathlib import Path
 
 import torch
