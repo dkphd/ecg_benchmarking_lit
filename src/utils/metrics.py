@@ -12,7 +12,6 @@ from torchmetrics import (
 
 
 def insert_metrics(ecg_classifier, num_classes, prefix="train", task="multiclass"):
-
     metrics_dict = {}
 
     for metric in (
@@ -27,14 +26,11 @@ def insert_metrics(ecg_classifier, num_classes, prefix="train", task="multiclass
         Specificity,
     ):
         metric_name = f"{prefix}_{metric.__name__.lower()}"
-        if task == 'multiclass':
-            setattr(ecg_classifier, metric_name, metric(num_classes=num_classes, task='multiclass'))
-        elif task == 'multilabel':
-            setattr(ecg_classifier, metric_name, metric(num_labels=num_classes, task='multilabel'))
-        metrics_dict[metric_name] = getattr(ecg_classifier, metric_name)
 
-    # accuracy_no_reduction = Accuracy(num_classes=num_classes, task=task, average=None)
-    # setattr(ecg_classifier, f"{prefix}_accuracy_no_reduction", accuracy_no_reduction)
-    # metrics_dict[f"{prefix}_accuracy_no_reduction"] = accuracy_no_reduction
+        if task == "multiclass":
+            setattr(ecg_classifier, metric_name, metric(num_classes=num_classes, task="multiclass"))
+        elif task == "multilabel":
+            setattr(ecg_classifier, metric_name, metric(num_labels=num_classes, task="multilabel"))
+        metrics_dict[metric_name] = getattr(ecg_classifier, metric_name)
 
     return metrics_dict
