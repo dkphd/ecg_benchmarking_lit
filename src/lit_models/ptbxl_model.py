@@ -7,7 +7,7 @@ from torch.optim.lr_scheduler import OneCycleLR
 
 
 class ECGClassifier(pl.LightningModule):
-    def __init__(self, model, num_classes, loss_fn, learning_rate, wd, total_optimizer_steps, task, **kwargs):
+    def __init__(self, model, num_classes, loss_fn, learning_rate, wd, task, **kwargs):
         super(ECGClassifier, self).__init__()
 
         self.kwargs = kwargs
@@ -19,12 +19,10 @@ class ECGClassifier(pl.LightningModule):
         # Learning rate
         self.learning_rate = learning_rate
         self.num_classes = num_classes
-        self.total_optimizer_steps = total_optimizer_steps
 
         self.wd = wd
         self.task = task
         self.train_metrics, self.val_metrics, self.test_metrics = self._configure_metrics()
-        
 
     def forward(self, x):
         return self.model(x)
@@ -37,7 +35,6 @@ class ECGClassifier(pl.LightningModule):
             "train_loss", loss, on_epoch=True, prog_bar=True, logger=True, on_step=True
         )  # Log to progress bar and logger
         self._calculate_metrics(self.train_metrics, y_pred, y)
-
 
         return loss
 
@@ -59,14 +56,16 @@ class ECGClassifier(pl.LightningModule):
         x, y = batch
         y_pred = self.model(x)
         self._calculate_metrics(self.test_metrics, y_pred, y)
-    
+
     def configure_optimizers(self):
         opt = torch.optim.AdamW(self.parameters(), lr=self.learning_rate, weight_decay=self.wd)
         scheduler = OneCycleLR(opt, max_lr=self.learning_rate, total_steps=self.trainer.estimated_stepping_batches)
         lr_scheduler = {"scheduler": scheduler, "interval": "step"}
         return {"optimizer": opt, "lr_scheduler": lr_scheduler}
 
-    def _configure_metrics(self,):
+    def _configure_metrics(
+        self,
+    ):
         metrics_dict_train = insert_metrics(self, self.num_classes, prefix="train", task=self.task)
         metrics_dict_val = insert_metrics(self, self.num_classes, prefix="val", task=self.task)
         metrics_dict_test = insert_metrics(self, self.num_classes, prefix="test", task=self.task)
@@ -75,9 +74,9 @@ class ECGClassifier(pl.LightningModule):
 
     def _calculate_metrics(self, metrics_dict, y_pred, y_true):
         for metric_name, metric_object in metrics_dict.items():
-            #print(metric_name, self.task)
+            # print(metric_name, self.task)
             if self.task == "multiclass":
                 y_true = y_true.argmax(dim=1)
-            
+
             metric_object(y_pred, y_true.int())
             self.log(metric_name, metric_object, on_step=True, on_epoch=True)
