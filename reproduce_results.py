@@ -132,7 +132,7 @@ def validate_model(trainer, data_module, metrics={}):
 # In[10]:
 
 
-def train_model_with_validation(config, project="ecg_benchmarking_lit", name="test_run", entity="phd-dk"):
+def train_model_with_validation(config, project="ecg_arek_test", name="test_run", entity="phd-dk"):
 
     run = wandb.init(project=project, name=name, entity=entity, config=config)
 
