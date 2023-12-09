@@ -72,7 +72,7 @@ def get_model(total_optimizer_steps, model_config, model_name="resnet1d_wang", t
     model = get_model_registry()[model_name](
     **model_config
 )
-
+    print(f"Model: {model}")
     model_lit = ECGClassifier(
         model, 5, loss, 0.01, wd=0.01, total_optimizer_steps=total_optimizer_steps, task=task)
     
@@ -132,7 +132,7 @@ def validate_model(trainer, data_module, metrics={}):
 # In[10]:
 
 
-def train_model_with_validation(config, project="ecg_benchmarking_lit", name="test_run", entity="phd-dk"):
+def train_model_with_validation(config, project="ecg_arek_tests", name="test_run", entity="phd-dk"):
 
     run = wandb.init(project=project, name=name, entity=entity, config=config)
 
@@ -141,6 +141,8 @@ def train_model_with_validation(config, project="ecg_benchmarking_lit", name="te
 
     loss = torch.nn.BCEWithLogitsLoss() if not FILTER_FOR_SINGLELABEL else torch.nn.CrossEntropyLoss()
     task = "multilabel" if not FILTER_FOR_SINGLELABEL else "multiclass"
+
+    run.config['task'] = task
 
     data_module = get_datamodule(run, FILTER_FOR_SINGLELABEL, BATCH_SIZE)
     print(len(data_module.val_dataset))
@@ -174,38 +176,41 @@ def train_model_with_validation(config, project="ecg_benchmarking_lit", name="te
 # In[9]:
 
 
-# model_config = dict(
-#     num_classes = 5,
-#     k = 12,
-#     headers = 5,
-#     depth = 1,
-#     seq_length=250
-# )
-# config = {
-#     "BATCH_SIZE": 128,
-#     "EPOCHS": 50,
-#     "ACCUMULATE_GRADIENT_STEPS": 1,
-#     "FILTER_FOR_SINGLELABEL" : False,
-#     "model_config": model_config,
-#     "model_name": "conv_transformer"
-# }
-
 model_config = dict(
-    num_classes=5,
-    input_channels=12,
-    kernel_size=5 * 8,
-    ps_head=0.5,
-    lin_ftrs_head=[128],
+    num_classes = 5,
+    k = 12,
+    headers = 8,
+    depth = 2,
+    seq_length=250,
+    dd1 = 0.3,
+    dropout_proba = 0.4
+    
 )
-
 config = {
     "BATCH_SIZE": 128,
     "EPOCHS": 50,
     "ACCUMULATE_GRADIENT_STEPS": 1,
     "FILTER_FOR_SINGLELABEL" : False,
     "model_config": model_config,
-    "model_name": "inception1d"
+    "model_name": "conv_transformer"
 }
+
+# model_config = dict(
+#     num_classes=5,
+#     input_channels=12,
+#     kernel_size=5 * 8,
+#     ps_head=0.5,
+#     lin_ftrs_head=[128],
+# )
+
+# config = {
+#     "BATCH_SIZE": 128,
+#     "EPOCHS": 50,
+#     "ACCUMULATE_GRADIENT_STEPS": 1,
+#     "FILTER_FOR_SINGLELABEL" : False,
+#     "model_config": model_config,
+#     "model_name": "inception1d"
+# }
 
 
 # In[10]:

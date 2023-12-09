@@ -124,7 +124,7 @@ class ConvTransformerBLock(nn.Module):
         self.dropout = nn.Dropout(p = dropout_proba)
         self.activation = nn.ReLU()
         
-    def forward(self, x, train=False):
+    def forward(self, x, train=True):
         
         # Self attention + Residual
         x = self.attention(x) + x
@@ -147,7 +147,7 @@ class ConvTransformerBLock(nn.Module):
 
 # Forcasting Conv Transformer :
 class ForcastConvTransformer(nn.Module):
-    def __init__(self,num_classes, k, headers, depth, seq_length, kernel_size = 5, mask_next = True, mask_diag = False, dropout_proba = 0.2, num_tokens = None):
+    def __init__(self, num_classes, k, headers, depth, seq_length, kernel_size = 5, mask_next = True, mask_diag = False, dropout_proba = 0.2, num_tokens = None, dd1 = 0.5):
         super().__init__()
         # Embedding 
         self.tokens_in_count = False
@@ -173,6 +173,7 @@ class ForcastConvTransformer(nn.Module):
         #self.topreSigma = nn.Linear(k, num_classes)
         self.tomu = nn.Linear(self.seq_length * self.k, num_classes)
         self.plus = nn.Softplus()
+        self.dd1 = nn.Dropout(p=dd1)
         
     def forward(self, x, tokens = None):
         x = x.permute(0,2,1)
@@ -203,6 +204,7 @@ class ForcastConvTransformer(nn.Module):
         # Transformer :
         x = self.TransformerBlocks(x)
         x = self.flatten(x)
+        x = self.dd1(x)
         x = self.tomu(x)
         #sigma = self.plus(presigma)
         #x = self.plus(x)
