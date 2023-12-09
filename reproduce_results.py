@@ -184,7 +184,7 @@ model_config = dict(
     seq_length=250,
     dd1 = 0.3,
     dropout_proba = 0.4
-    
+
 )
 config = {
     "BATCH_SIZE": 128,

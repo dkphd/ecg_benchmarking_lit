@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument('--raw_data_dir', type=str, default='./data/ptbxl')
     parser.add_argument('--output_dir', type=str, default='./data/ptbxl_split')
     parser.add_argument('--sampling_rate', type=int, default=100)
-    parser.add_argument('--wandb_project', type=str, default='ecg_benchmarking_lit')
+    parser.add_argument('--wandb_project', type=str, default='ecg_arek_tests')
     parser.add_argument('--dataset_name', type=str, default='ptbxl_split')
     
     args = parser.parse_args()
@@ -89,30 +89,32 @@ if __name__ == "__main__":
     
     input_dir, output_dir, sampling_rate, wandb_project, dataset_name = parse_args()
     
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # output_dir.mkdir(parents=True, exist_ok=True)
     
-    ECG_df = load_and_process_ecg_df(input_dir)
-    SCP_df = get_filtered_scp_df(input_dir)
-    unique_classes = get_unique_classes(SCP_df)
+    # ECG_df = load_and_process_ecg_df(input_dir)
+    # SCP_df = get_filtered_scp_df(input_dir)
+    # unique_classes = get_unique_classes(SCP_df)
 
-    label_mapping = {c: i for i, c in enumerate(unique_classes)}
+    # label_mapping = {c: i for i, c in enumerate(unique_classes)}
 
-    create_binary_encoded = partial(create_binary_encoded, label_mapping=label_mapping)
+    # create_binary_encoded = partial(create_binary_encoded, label_mapping=label_mapping)
     
-    diagnostic_class = partial(diagnostic_class, SCP_df=SCP_df)
-    ECG_df['scp_classes'] = ECG_df.scp_codes.apply(diagnostic_class)
+    # diagnostic_class = partial(diagnostic_class, SCP_df=SCP_df)
+    # ECG_df['scp_classes'] = ECG_df.scp_codes.apply(diagnostic_class)
 
-    ECG_df.loc[:, unique_classes.tolist()] =  np.vstack(ECG_df['scp_classes'].apply(create_binary_encoded))
+    # ECG_df.loc[:, unique_classes.tolist()] =  np.vstack(ECG_df['scp_classes'].apply(create_binary_encoded))
 
-    ECG_df_train = ECG_df[ECG_df.strat_fold < 8]
-    ECG_df_test = ECG_df[ECG_df.strat_fold == 9]
-    ECG_df_val = ECG_df[ECG_df.strat_fold == 8]
+    # ECG_df_train = ECG_df[ECG_df.strat_fold < 8]
+    # ECG_df_test = ECG_df[ECG_df.strat_fold == 9]
+    # ECG_df_val = ECG_df[ECG_df.strat_fold == 8]
     
-    encoded_df_train, metadata_train, data_train = save_files_according_to_split(ECG_df_train, input_dir, prefix='train', sampling_rate=sampling_rate)
-    encoded_df_val, metadata_val, data_val = save_files_according_to_split(ECG_df_val, input_dir, prefix='val', sampling_rate=sampling_rate)
-    encoded_df_test, metadata_test, data_test = save_files_according_to_split(ECG_df_test, input_dir, prefix='test', sampling_rate=sampling_rate)
+    # encoded_df_train, metadata_train, data_train = save_files_according_to_split(ECG_df_train, input_dir, prefix='train', sampling_rate=sampling_rate)
+    # encoded_df_val, metadata_val, data_val = save_files_according_to_split(ECG_df_val, input_dir, prefix='val', sampling_rate=sampling_rate)
+    # encoded_df_test, metadata_test, data_test = save_files_according_to_split(ECG_df_test, input_dir, prefix='test', sampling_rate=sampling_rate)
     
     wandb.init(project=wandb_project)
     artifact = wandb.Artifact(name=dataset_name, type="dataset")
     artifact.add_dir(local_path=output_dir)
     wandb.log_artifact(artifact)
+
+    wandb.finish()
