@@ -9,7 +9,6 @@ from datetime import datetime
 import math
 import random
 #import tqdm
-from torchtext import data, datasets, vocab
 
 import os
 from torch.utils.data import DataLoader, Dataset, Sampler
