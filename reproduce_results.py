@@ -36,6 +36,22 @@ def get_model_registry():
         "inception1d": inception1d
     }
 
+from pytorch_lightning.callbacks import Callback
+
+class HighestValLossTracker(Callback):
+    def __init__(self):
+        super().__init__()
+        self.highest_val_loss = float('inf')
+        self.metrics = {}
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        current_val_loss = trainer.callback_metrics['val_loss_epoch']
+        if current_val_loss < self.highest_val_loss:
+            self.highest_val_loss = current_val_loss
+            self.metrics = {"best_" + k:v.cpu() for k,v in trainer.callback_metrics.items()}
+        trainer.logger.experiment.log(self.metrics)
+
+
 
 # In[5]:
 
@@ -97,7 +113,7 @@ def train_model(model_lit, data_module, config):
         log_every_n_steps=1,
         max_epochs=config.EPOCHS,
         logger=wandb_logger,
-        callbacks=[early_stop_callback, learning_rate_monitor],
+        callbacks=[early_stop_callback, learning_rate_monitor, HighestValLossTracker()],
     )
 
     trainer.fit(model_lit, datamodule=data_module)
