@@ -40,6 +40,24 @@ def get_datamodule(run, FILTER_FOR_SINGLELABEL, BATCH_SIZE):
     return data_module
 
 
+from pytorch_lightning.callbacks import Callback
+
+class HighestValLossTracker(Callback):
+    def __init__(self):
+        super().__init__()
+        self.highest_val_loss = float('inf')
+        self.metrics = {}
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        current_val_loss = trainer.callback_metrics['val_loss_epoch']
+        if current_val_loss < self.highest_val_loss:
+            self.highest_val_loss = current_val_loss
+            self.metrics = {"best_" + k:v.cpu() for k,v in trainer.callback_metrics.items()}
+        trainer.logger.experiment.log(self.metrics)
+
+
+
+
 def train_model():
     
     
@@ -74,8 +92,8 @@ def train_model():
             model, 5, loss, 0.01, wd=0.01, task=task)
     
 
-        wandb_logger = WandbLogger(log_model="all")
-        wandb_logger.watch(model_lit, log="all") 
+        wandb_logger = WandbLogger()
+        wandb_logger.watch(model_lit) 
         early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.01, patience=10, verbose=False, mode="min")
         learning_rate_monitor = LearningRateMonitor(logging_interval="step", log_momentum=True)
         # Create the Learner
@@ -84,7 +102,7 @@ def train_model():
             log_every_n_steps=1,
             max_epochs=50,
             logger=wandb_logger,
-            callbacks=[early_stop_callback, learning_rate_monitor],
+            callbacks=[learning_rate_monitor, HighestValLossTracker()],
             enable_progress_bar=False
         )
 
@@ -93,7 +111,7 @@ def train_model():
 sweep_config = {
     'method': 'bayes',  # Can be grid, random, bayes
     'metric': {
-        'name': 'val_loss_epoch',
+        'name': 'best_val_loss_epoch',
         'goal': 'minimize'   
     },
     'parameters': {
