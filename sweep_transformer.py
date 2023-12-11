@@ -104,6 +104,14 @@ sweep_config = {
             'min': 0.1,
             'max': 0.5
         },
+        'kernel_size': {
+            'min': 4,
+            'max': 15
+        },
+        'stride': {
+            'min': 1,
+            'max': 10
+        },
         'depth': {
             'values': [1,2,3,4,5]
         },
