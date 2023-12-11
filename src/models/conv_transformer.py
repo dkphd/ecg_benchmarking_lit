@@ -2,23 +2,9 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-import numpy as np
-from torch.autograd import Variable
-from datetime import datetime
-
-import math
-import random
-#import tqdm
-
-import os
-from torch.utils.data import DataLoader, Dataset, Sampler
-from torch.utils.data.sampler import RandomSampler
-
-
-
 # Self Attention Class
 class SelfAttentionConv(nn.Module):
-    def __init__(self, k, headers = 8, kernel_size = 5, mask_next = True, mask_diag = False):
+    def __init__(self, k, headers = 8, kernel_size = 5, mask_next = True, mask_diag = False, stride = 1):
         super().__init__()
         
         self.k, self.headers, self.kernel_size = k, headers, kernel_size
@@ -32,8 +18,8 @@ class SelfAttentionConv(nn.Module):
         padding = (kernel_size-1)
         self.padding_opertor = nn.ConstantPad1d((padding,0), 0)
         
-        self.toqueries = nn.Conv1d(k, k*h, kernel_size, padding=0 ,bias=True)
-        self.tokeys = nn.Conv1d(k, k*h, kernel_size, padding=0 ,bias=True)
+        self.toqueries = nn.Conv1d(k, k*h, kernel_size, stride=stride, padding=0 ,bias=True)
+        self.tokeys = nn.Conv1d(k, k*h, kernel_size, stride=stride, padding=0 ,bias=True)
         self.tovalues = nn.Conv1d(k, k*h, kernel_size = 1 , padding=0 ,bias=False) # No convolution operated
         
         # Heads unifier
@@ -103,11 +89,11 @@ class SelfAttentionConv(nn.Module):
 # Conv Transforme Block
 
 class ConvTransformerBLock(nn.Module):
-    def __init__(self, k, headers, kernel_size = 5, mask_next = True, mask_diag = False, dropout_proba = 0.2):
+    def __init__(self, k, headers, kernel_size = 5, mask_next = True, mask_diag = False, dropout_proba = 0.2, stride = 1):
         super().__init__()
         
         # Self attention
-        self.attention = SelfAttentionConv(k, headers, kernel_size, mask_next, mask_diag)
+        self.attention = SelfAttentionConv(k, headers, kernel_size, mask_next, mask_diag, stride)
         
         # First & Second Norm
         self.norm1 = nn.LayerNorm(k)
@@ -146,7 +132,8 @@ class ConvTransformerBLock(nn.Module):
 
 # Forcasting Conv Transformer :
 class ForcastConvTransformer(nn.Module):
-    def __init__(self, num_classes, k, headers, depth, seq_length, kernel_size = 5, mask_next = True, mask_diag = False, dropout_proba = 0.2, num_tokens = None, dd1 = 0.5):
+    def __init__(self, num_classes, k, headers, depth, seq_length, kernel_size = 5, mask_next = True,
+                 mask_diag = False, dropout_proba = 0.2, num_tokens = None, dd1 = 0.5, stride = 1):
         super().__init__()
         # Embedding 
         self.tokens_in_count = False
@@ -164,7 +151,7 @@ class ForcastConvTransformer(nn.Module):
         # Transformer blocks
         tblocks = []
         for t in range(depth):
-            tblocks.append(ConvTransformerBLock(k, headers, kernel_size, mask_next, mask_diag, dropout_proba))
+            tblocks.append(ConvTransformerBLock(k, headers, kernel_size, mask_next, mask_diag, dropout_proba, stride))
         self.TransformerBlocks = nn.Sequential(*tblocks)
         
         # Transformation from k dimension to numClasses
