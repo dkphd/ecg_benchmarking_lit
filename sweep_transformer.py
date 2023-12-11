@@ -126,10 +126,6 @@ sweep_config = {
             'min': 4,
             'max': 15
         },
-        'stride': {
-            'min': 1,
-            'max': 10
-        },
         'depth': {
             'values': [1,2,3,4,5]
         },

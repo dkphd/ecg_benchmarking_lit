@@ -15,7 +15,7 @@ class SelfAttentionConv(nn.Module):
         
         # Query, Key and Value Transformations
         
-        padding = (kernel_size-1)
+        padding = (kernel_size-stride)
         self.padding_opertor = nn.ConstantPad1d((padding,0), 0)
         
         self.toqueries = nn.Conv1d(k, k*h, kernel_size, stride=stride, padding=0 ,bias=True)
